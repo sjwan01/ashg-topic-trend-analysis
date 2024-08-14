@@ -11,7 +11,7 @@ def parser_21(document):
             current_stage = None
             blocks = page.get_text('dict')['blocks']
             lines = get_lines_from_column(blocks)
-            
+
             for line in lines:
                 content = get_text(line)
 
@@ -30,16 +30,14 @@ def parser_21(document):
                     data[-1].update(dict(authors=authors_match.group(1) + ' '))
                 elif not current_stage or content_match:
                     current_stage = ParsingStage.CONTENT
-                    if content_match:
-                        data[-1].update(dict(content=content_match.group(1) + ' '))
+                    data[-1].update(dict(content=content_match.group(1) + ' ')) if content_match else None
 
                 if title_match or authors_match or content_match or not current_stage:
                     continue
 
-                if data:
-                    data = update_data(data, current_stage, content)
+                data = update_data(data, current_stage, content) if data else data
 
         return pd.DataFrame(data).applymap(lambda x: x.rstrip())
 
     for pages in [range(73, 89), range(90, 295), range(296, 379), range(380, 2224)]:
-        yield partial_parser(map(document.__getitem__, pages) )
+        yield partial_parser(map(document.__getitem__, pages))

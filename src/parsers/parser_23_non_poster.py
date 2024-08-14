@@ -25,23 +25,19 @@ def parser_23_non_poster(document):
             if topic_match:
                 header = topic_match.group(1)
             elif title_match:
-                if data and not (data[-1]['authors'] and data[-1]['content']):
-                    data.pop()
+                data.pop() if data and not (data[-1]['authors'] and data[-1]['content']) else None
                 current_stage = ParsingStage.TITLE
                 data.append(dict(title=title_match.group(1) + ' ', authors='', content='', header=header))
             elif authors_match:
                 current_stage = ParsingStage.AUTHORS
-                if authors_match.group(1):
-                    data[-1].update(dict(authors=authors_match.group(1) + ' '))
+                data[-1].update(dict(authors=authors_match.group(1) + ' ')) if authors_match.group(1) else None
             elif not current_stage or content_match:
                 current_stage = ParsingStage.CONTENT
-                if data and content_match and content_match.group(1):
-                    data[-1].update(dict(content=content_match.group(1) + ' '))
+                data[-1].update(dict(content=content_match.group(1) + ' ')) if content_match and content_match.group(1) else None
 
             if topic_match or title_match or authors_match or content_match or not current_stage:
                 continue
 
-            if data:
-                data = update_data(data, current_stage, content)
+            data = update_data(data, current_stage, content) if data else data
 
     return pd.DataFrame(data).applymap(lambda x: x.rstrip())

@@ -2,7 +2,7 @@ from ..utils import *
 import pandas as pd
 
 def parser_19(document):
-    
+
     data = []
 
     for page in document:
@@ -10,7 +10,7 @@ def parser_19(document):
         blocks = page.get_text('dict')['blocks']
         lines = get_lines_from_column(blocks)
         last_line_bbox = None
-        
+
         for line in lines:
             content = get_text(line).replace('ﬃ', 'ffi')
             current_line_bbox = line['bbox']
@@ -27,23 +27,17 @@ def parser_19(document):
                 data.append(dict(id=title_match.group(1), title=title_match.group(2) + ' ', authors='', affiliations='', content=''))
             elif authors_match:
                 current_stage = ParsingStage.AUTHORS
-                if authors_match.group(1):
-                    data[-1].update(dict(authors=authors_match.group(1) + ' '))
+                data[-1].update(dict(authors=authors_match.group(1) + ' ')) if authors_match.group(1) else None
             elif affiliations_match:
                 current_stage = ParsingStage.AFFILIATIONS
                 last_line_bbox = current_line_bbox
-                if affiliations_match.group(1):
-                    data[-1].update(dict(affiliations=affiliations_match.group(1) + ' '))
+                data[-1].update(dict(affiliations=affiliations_match.group(1) + ' ')) if affiliations_match.group(1) else None
 
             if title_match or authors_match or affiliations_match:
                 continue
 
-            if not current_stage or last_line_bbox and abs(last_line_bbox[3] - current_line_bbox[3]) > 45:
-                current_stage = ParsingStage.CONTENT
-
-            if data:
-                data = update_data(data, current_stage, content)
-            
+            current_stage = ParsingStage.CONTENT if not current_stage or last_line_bbox and is_content_start_y(last_line_bbox, current_line_bbox, 45) else current_stage
+            data = update_data(data, current_stage, content) if data else data
             last_line_bbox = current_line_bbox
-    
+
     return pd.DataFrame(data).applymap(lambda x: x.rstrip())

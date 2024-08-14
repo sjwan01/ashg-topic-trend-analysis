@@ -36,7 +36,7 @@ def parser_13_to_18(document):
                     last_bold_idx = get_last_bold_font_index(fonts)
                     next_line_fonts, _ = get_fonts_and_texts(next_line)
                     data[-1]['title'] = data[-1]['title'].rstrip()[:-1] if ends_with_dash(data[-1]['title']) else data[-1]['title']
-                    if get_last_bold_font_index(next_line_fonts) != -1:
+                    if get_last_bold_font_index(next_line_fonts) != -1 and not is_content_start_x1(next_line, x1):
                         data[-1]['title'] += ' '.join(text for text in texts if text != data[-1]['id']).lstrip() + ' '
                     else:
                         data[-1]['title'] += ' '.join(text for text in texts[:last_bold_idx+1] if text != data[-1]['id']).lstrip()
@@ -45,8 +45,7 @@ def parser_13_to_18(document):
                 case ParsingStage.AUTHORS:
                     data[-1]['authors'] = data[-1]['authors'].rstrip()[:-1] if ends_with_dash(data[-1]['authors']) else data[-1]['authors']
                     data[-1]['authors'] += (content + ' ').lstrip()
-                    if (is_content_start_x1(next_line, x1) or is_content_start_x2(next_line, x2)) and is_authors_end(data[-1]['authors']):
-                        current_stage = ParsingStage.CONTENT     
+                    current_stage = ParsingStage.CONTENT if (is_content_start_x1(next_line, x1) or is_content_start_x2(next_line, x2)) and is_authors_end(data[-1]['authors']) else current_stage
                 case ParsingStage.CONTENT:
                     data[-1]['content'] = data[-1]['content'].rstrip()[:-1] if ends_with_dash(data[-1]['content']) else data[-1]['content']
                     data[-1]['content'] += (content + ' ').lstrip()
